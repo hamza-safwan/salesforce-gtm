@@ -1,0 +1,7 @@
+* text=auto
+*.py text eol=lf
+*.sql text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.csv text eol=lf
+*.pbix binary

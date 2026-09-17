@@ -1,0 +1,8 @@
+# Local fixtures only. sf-inspect will export actual stage API names from the org.
+source: local_fixture
+stages:
+  - {api_name: Prospecting, probability: 10, is_closed: false, is_won: false}
+  - {api_name: 'Proposal/Price Quote', probability: 75, is_closed: false, is_won: false}
+  - {api_name: 'Negotiation/Review', probability: 90, is_closed: false, is_won: false}
+  - {api_name: 'Closed Won', probability: 100, is_closed: true, is_won: true}
+  - {api_name: 'Closed Lost', probability: 0, is_closed: true, is_won: false}

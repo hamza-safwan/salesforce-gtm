@@ -1,0 +1,2798 @@
+PROJECT SPECIFICATION
+=====================
+
+Project Name:
+Salesforce GTM Data Quality & Account Intelligence Framework
+
+Repository Name:
+salesforce-gtm-data-quality-framework
+
+PRIMARY OBJECTIVE
+=================
+
+Build a production-style portfolio project that demonstrates the work performed by
+Sales Data Quality, Revenue Operations, GTM Operations, CRM Data, and Salesforce
+Data Quality teams.
+
+The system must demonstrate hands-on knowledge of:
+
+- Salesforce Accounts
+- Salesforce Contacts
+- Salesforce Opportunities
+- Parent-child Account hierarchies
+- CRM data modeling
+- CRM segmentation
+- Salesforce custom fields
+- Salesforce validation rules
+- Salesforce matching rules
+- Salesforce duplicate rules
+- SOQL
+- Salesforce CLI
+- Bulk API 2.0
+- Python
+- PostgreSQL
+- Advanced SQL
+- Data profiling
+- Data validation
+- Data completeness
+- Data uniqueness
+- Data consistency
+- Data validity
+- Duplicate detection
+- Account hierarchy integrity
+- Data enrichment validation
+- Root-cause analysis
+- Data quality scorecards
+- Remediation prioritization
+- Pipeline-at-risk analysis
+- Power BI
+- Human-in-the-loop remediation
+- LLM-assisted duplicate investigation (optional final phase)
+- Data dictionaries
+- Operational runbooks
+
+The project must NOT be a generic Salesforce CRUD app.
+
+The central workflow is:
+
+Synthetic GTM Sources
+       |
+       v
+Synthetic data + synthetic enrichment feeds
+       |
+       v
+Salesforce
+Accounts / Contacts / Opportunities
+       |
+       v
+Salesforce CLI / Bulk API 2.0
+       |
+       v
+PostgreSQL raw snapshots
+       |
+       v
+SQL + Python Data Quality Engine
+       |
+       +--> Completeness
+       +--> Validity
+       +--> Consistency
+       +--> Uniqueness
+       +--> Hierarchy Integrity
+       +--> Enrichment Quality
+       |
+       v
+DQ Scorecards + Root Cause Analysis
+       |
+       v
+Remediation Priority Queue
+       |
+       +--> Salesforce DQ fields
+       +--> Salesforce Data Quality Issues
+       +--> Salesforce reports/dashboard
+       |
+       v
+Power BI Executive Data Quality Dashboard
+
+
+IMPORTANT DEVELOPMENT PRINCIPLES
+================================
+
+1. Use only synthetic data. Never use real customer or personal data.
+
+2. Everything possible must be reproducible from source control.
+
+3. Do not hardcode Salesforce record IDs.
+
+4. Use external IDs for idempotent Salesforce upserts.
+
+5. The pipeline must be rerunnable without producing duplicate records.
+
+6. Keep Salesforce authentication outside source control.
+
+7. Never commit:
+   - Salesforce access tokens
+   - passwords
+   - security tokens
+   - .env files
+   - Power BI credentials
+
+8. Prefer deterministic generation:
+   random seed = 42.
+
+9. Separate:
+   - data generation
+   - Salesforce integration
+   - raw ingestion
+   - quality detection
+   - scoring
+   - remediation
+   - reporting
+
+10. Every DQ finding must have:
+    - rule ID
+    - affected entity
+    - quality dimension
+    - severity
+    - explanation
+    - recommended remediation
+    - detected timestamp
+    - run ID
+
+11. Do not automatically merge duplicate Salesforce records.
+    Duplicate resolution must remain human-reviewed.
+
+12. Safe deterministic fixes can be automated:
+    - normalization
+    - segmentation recalculation
+    - standard formatting
+    - missing derived fields
+
+13. Every important business rule must be documented.
+
+
+TECHNOLOGY STACK
+================
+
+Required:
+
+- Python 3.11+
+- PostgreSQL 16 in Docker
+- Docker Compose
+- Salesforce Developer Edition
+- Salesforce CLI (`sf`)
+- Salesforce DX project structure
+- Pandas
+- Faker
+- psycopg 3
+- RapidFuzz
+- python-dotenv
+- PyYAML
+- pytest
+- Power BI Desktop
+- Git
+
+Optional:
+
+- requests
+- pydantic
+- rich
+- typer
+- Ollama for local LLM duplicate adjudication
+
+
+FREE INFRASTRUCTURE
+===================
+
+Salesforce:
+Use a free Salesforce Developer Edition org.
+
+DO NOT attempt to load all 10,000+ generated records into Salesforce.
+
+Developer Edition has limited storage.
+
+Use approximately:
+
+Accounts:      300
+Contacts:      550
+Opportunities: 300
+
+Total Salesforce CRM records: approximately 1,150.
+
+Keep the full 10,000+ dataset locally in PostgreSQL.
+
+Suggested full local dataset:
+
+Accounts:       2,500
+Contacts:       5,000
+Opportunities:  2,500
+--------------------------------
+Total:         10,000
+
+
+POSTGRESQL
+==========
+
+Run locally with Docker Compose.
+
+Create:
+
+docker-compose.yml
+
+with:
+
+- postgres:16
+- database: gtmdq
+- username: gtmdq
+- password configurable through .env
+- port: 5432
+- persistent Docker volume
+
+No cloud database is required.
+
+
+POWER BI
+========
+
+Use free Power BI Desktop on Windows.
+
+Connect Power BI Desktop directly to local PostgreSQL.
+
+Do not make Power BI cloud publishing a project dependency.
+
+Commit:
+
+powerbi/README.md
+powerbi/screenshots/
+powerbi/GTM_Data_Quality.pbix
+
+The PBIX can be committed if file size is reasonable.
+
+Do NOT store credentials in Power BI screenshots or README.
+
+
+SALESFORCE ACCOUNT SETUP
+========================
+
+USER MANUAL STEP:
+
+Create a free Salesforce Developer Edition org.
+
+After creation:
+
+1. Log in.
+2. Open Setup.
+3. Verify API access is enabled.
+4. Use the standard Sales app.
+5. Confirm Account, Contact, and Opportunity objects exist.
+
+Install Salesforce CLI on Windows.
+
+Verify:
+
+sf version
+
+Login:
+
+sf org login web --alias gtmdq --set-default
+
+Verify:
+
+sf org display --target-org gtmdq
+
+Never commit authentication artifacts generated by Salesforce CLI.
+
+
+SALESFORCE PROJECT
+==================
+
+Generate an Salesforce DX project:
+
+sf project generate --name salesforce-gtm-data-quality-framework
+
+The project repository should eventually contain both Salesforce metadata and the
+Python/PostgreSQL application.
+
+
+REPOSITORY STRUCTURE
+====================
+
+salesforce-gtm-data-quality-framework/
+|
+|-- README.md
+|-- .gitignore
+|-- .env.example
+|-- requirements.txt
+|-- pyproject.toml
+|-- docker-compose.yml
+|-- Makefile
+|-- sfdx-project.json
+|
+|-- force-app/
+|   `-- main/
+|       `-- default/
+|           |-- objects/
+|           |   |-- Account/
+|           |   |-- Contact/
+|           |   |-- Opportunity/
+|           |   `-- Data_Quality_Issue__c/
+|           |
+|           |-- matchingRules/
+|           |-- duplicateRules/
+|           `-- permissionsets/
+|
+|-- src/
+|   `-- gtmdq/
+|       |-- __init__.py
+|       |-- config.py
+|       |-- cli.py
+|       |
+|       |-- generator/
+|       |   |-- accounts.py
+|       |   |-- contacts.py
+|       |   |-- opportunities.py
+|       |   |-- enrichment.py
+|       |   `-- corruption.py
+|       |
+|       |-- salesforce/
+|       |   |-- cli.py
+|       |   |-- export.py
+|       |   |-- import_data.py
+|       |   `-- pushback.py
+|       |
+|       |-- database/
+|       |   |-- connection.py
+|       |   |-- ingestion.py
+|       |   `-- migrations.py
+|       |
+|       |-- dq/
+|       |   |-- engine.py
+|       |   |-- completeness.py
+|       |   |-- validity.py
+|       |   |-- consistency.py
+|       |   |-- hierarchy.py
+|       |   |-- enrichment.py
+|       |   |-- duplicates.py
+|       |   |-- scoring.py
+|       |   |-- root_cause.py
+|       |   `-- remediation.py
+|       |
+|       `-- ai/
+|           `-- duplicate_adjudicator.py
+|
+|-- config/
+|   |-- dq_rules.yml
+|   |-- scoring.yml
+|   `-- segmentation.yml
+|
+|-- sql/
+|   |-- 001_schema.sql
+|   |-- 010_profile.sql
+|   |-- 020_completeness.sql
+|   |-- 030_validity.sql
+|   |-- 040_consistency.sql
+|   |-- 050_hierarchy.sql
+|   |-- 060_enrichment.sql
+|   |-- 070_scorecard.sql
+|   |-- 080_pipeline_risk.sql
+|   |-- 090_root_cause.sql
+|   `-- 100_reporting_views.sql
+|
+|-- soql/
+|   |-- accounts.soql
+|   |-- contacts.soql
+|   `-- opportunities.soql
+|
+|-- data/
+|   |-- generated/
+|   |-- salesforce/
+|   `-- snapshots/
+|
+|-- docs/
+|   |-- architecture.md
+|   |-- crm_data_model.md
+|   |-- data_dictionary.md
+|   |-- dq_rules.md
+|   |-- root_cause_case_study.md
+|   |-- remediation_runbook.md
+|   |-- salesforce_setup.md
+|   `-- demo_script.md
+|
+|-- powerbi/
+|   |-- README.md
+|   `-- screenshots/
+|
+`-- tests/
+    |-- test_generator.py
+    |-- test_normalization.py
+    |-- test_duplicates.py
+    |-- test_hierarchy.py
+    |-- test_scoring.py
+    `-- test_remediation.py
+
+
+SALESFORCE DATA MODEL
+=====================
+
+Use the standard Salesforce objects where possible.
+
+Do NOT create custom objects to replace Account, Contact, or Opportunity.
+
+
+ACCOUNT STANDARD FIELDS
+=======================
+
+Use:
+
+Id
+Name
+Website
+Phone
+BillingStreet
+BillingCity
+BillingState
+BillingPostalCode
+BillingCountry
+Industry
+NumberOfEmployees
+AnnualRevenue
+Type
+ParentId
+CreatedDate
+LastModifiedDate
+
+
+ACCOUNT CUSTOM FIELDS
+=====================
+
+Create:
+
+External_Source_Id__c
+Type: Text(80)
+External ID: Yes
+Unique: Yes
+
+Source_System__c
+Type: Picklist
+Values:
+- Web Monitoring
+- Enrichment Vendor
+- Manual Entry
+- Partner Feed
+
+Ingestion_Batch_Id__c
+Type: Text(50)
+
+Region__c
+Type: Picklist
+Values:
+- US
+- UK
+- MX
+- Other
+
+Segment__c
+Type: Picklist
+Values:
+- SMB
+- Mid-Market
+- Enterprise
+
+ICP_Tier__c
+Type: Picklist
+Values:
+- Tier 1
+- Tier 2
+- Tier 3
+
+Canonical_Domain__c
+Type: Text(255)
+
+Enrichment_Source__c
+Type: Text(80)
+
+Last_Enriched_Date__c
+Type: Date
+
+DQ_Score__c
+Type: Number(5,2)
+
+DQ_Status__c
+Type: Picklist
+Values:
+- Healthy
+- Review
+- Critical
+
+DQ_Issue_Count__c
+Type: Number(5,0)
+
+
+CONTACT STANDARD FIELDS
+=======================
+
+Id
+AccountId
+FirstName
+LastName
+Email
+Phone
+MobilePhone
+Title
+Department
+MailingCountry
+CreatedDate
+LastModifiedDate
+
+
+CONTACT CUSTOM FIELDS
+=====================
+
+External_Source_Id__c
+Text(80), External ID, Unique
+
+Source_System__c
+Picklist same as Account
+
+Ingestion_Batch_Id__c
+Text(50)
+
+Seniority__c
+Picklist:
+- Individual Contributor
+- Manager
+- Director
+- VP
+- C-Level
+
+Contact_Status__c
+Picklist:
+- Active
+- Inactive
+- Unknown
+
+Last_Enriched_Date__c
+Date
+
+DQ_Score__c
+Number(5,2)
+
+DQ_Status__c
+Picklist:
+- Healthy
+- Review
+- Critical
+
+DQ_Issue_Count__c
+Number(5,0)
+
+
+OPPORTUNITY STANDARD FIELDS
+===========================
+
+Id
+Name
+AccountId
+StageName
+Amount
+CloseDate
+LeadSource
+Probability
+IsClosed
+IsWon
+CreatedDate
+LastModifiedDate
+
+
+OPPORTUNITY CUSTOM FIELDS
+=========================
+
+External_Source_Id__c
+Text(80), External ID, Unique
+
+Source_System__c
+Picklist
+
+Ingestion_Batch_Id__c
+Text(50)
+
+Region__c
+Picklist:
+- US
+- UK
+- MX
+- Other
+
+Sales_Segment__c
+Picklist:
+- SMB
+- Mid-Market
+- Enterprise
+
+DQ_Score__c
+Number(5,2)
+
+DQ_Status__c
+Picklist:
+- Healthy
+- Review
+- Critical
+
+DQ_Issue_Count__c
+Number(5,0)
+
+
+CUSTOM SALESFORCE OBJECT
+========================
+
+Create:
+
+Data_Quality_Issue__c
+
+Purpose:
+Represent the highest-priority remediation findings inside Salesforce.
+
+Do NOT push every finding into Salesforce.
+
+Only push approximately the top 100-200 active issues.
+
+Fields:
+
+Name
+Auto Number:
+DQI-{00000}
+
+External_Issue_Key__c
+Text(120)
+External ID
+Unique
+
+Run_Id__c
+Text(36)
+
+Entity_Type__c
+Picklist:
+- Account
+- Contact
+- Opportunity
+
+Entity_Record_Id__c
+Text(18)
+
+Account__c
+Lookup(Account)
+
+Contact__c
+Lookup(Contact)
+
+Opportunity__c
+Lookup(Opportunity)
+
+Rule_Id__c
+Text(40)
+
+Dimension__c
+Picklist:
+- Completeness
+- Validity
+- Consistency
+- Uniqueness
+- Hierarchy
+- Enrichment
+
+Severity__c
+Picklist:
+- Critical
+- High
+- Medium
+- Low
+
+Issue_Description__c
+Text(255)
+
+Priority_Score__c
+Number(5,2)
+
+Pipeline_At_Risk__c
+Currency(16,2)
+
+Detection_Confidence__c
+Number(5,2)
+
+Recommended_Action__c
+Text(255)
+
+Status__c
+Picklist:
+- New
+- In Review
+- Resolved
+- Ignored
+
+Detected_At__c
+DateTime
+
+
+SALESFORCE METADATA DEPLOYMENT
+==============================
+
+Codex should create Salesforce metadata for:
+
+- custom fields
+- Data_Quality_Issue__c
+- permission set if needed
+
+Keep prevention rules initially INACTIVE.
+
+Deploy schema:
+
+sf project deploy start \
+  --source-dir force-app/main/default \
+  --target-org gtmdq
+
+If the entire directory causes dependency problems, deploy object metadata first.
+
+Verify fields through:
+
+Setup -> Object Manager -> Account
+Setup -> Object Manager -> Contact
+Setup -> Object Manager -> Opportunity
+
+
+SYNTHETIC GTM DATA
+==================
+
+Generate deterministic synthetic data.
+
+Seed:
+42
+
+Generate:
+
+2,500 Accounts
+5,000 Contacts
+2,500 Opportunities
+
+TOTAL:
+10,000 CRM records.
+
+
+REGIONAL DISTRIBUTION
+=====================
+
+Approximately:
+
+US: 65%
+UK: 20%
+Mexico: 15%
+
+Use realistic but completely synthetic addresses and company/contact names.
+
+Faker locales may be used where useful.
+
+
+ACCOUNT DISTRIBUTION
+====================
+
+Segments approximately:
+
+SMB: 50%
+Mid-Market: 30%
+Enterprise: 20%
+
+
+SEGMENTATION BUSINESS LOGIC
+===========================
+
+Calculate expected segment:
+
+Enterprise:
+NumberOfEmployees >= 1000
+OR AnnualRevenue >= 100,000,000
+
+Mid-Market:
+NumberOfEmployees >= 200
+OR AnnualRevenue >= 20,000,000
+
+SMB:
+Otherwise
+
+Enterprise condition takes precedence over Mid-Market.
+
+
+REGION LOGIC
+============
+
+United States -> US
+United Kingdom -> UK
+Mexico -> MX
+Everything else -> Other
+
+
+ACCOUNT HIERARCHIES
+===================
+
+Create corporate families.
+
+Example:
+
+Global Holdings
+|
++-- Global Holdings US
+|   +-- Global Holdings Texas
+|
++-- Global Holdings UK
+|
+`-- Global Holdings Mexico
+
+Approximately 15-20% of Accounts should participate in hierarchies.
+
+Maximum legitimate hierarchy depth:
+3
+
+Each account should have a canonical external identifier.
+
+Maintain parent_external_id in the synthetic source data.
+
+Before Salesforce import, resolve parent_external_id -> Salesforce Account Id.
+
+
+OPPORTUNITY STAGES
+==================
+
+Use valid Salesforce Opportunity stage values from the target org.
+
+Do NOT hardcode assumptions without checking the org.
+
+Query available values or use values available in the Developer Edition.
+
+Generate realistic probabilities and amounts.
+
+Generate both:
+
+- open pipeline
+- Closed Won
+- Closed Lost
+
+
+DATA CORRUPTION / DIRTY DATA
+============================
+
+Generate clean canonical data first.
+
+THEN inject controlled corruption.
+
+Every intentionally injected issue must also be written to:
+
+data/generated/ground_truth_issues.csv
+
+Columns:
+
+ground_truth_id
+entity_type
+external_source_id
+rule_id
+corruption_type
+original_value
+corrupted_value
+
+
+Inject approximately:
+
+ACCOUNT ISSUES
+
+5% duplicate-like Accounts
+
+Mutations:
+- "ABC Technologies"
+- "ABC Technology LLC"
+- "ABC Tech."
+- alternate phone format
+- www vs non-www domains
+
+8% missing Industry
+
+6% missing Website
+
+4% malformed Website/domain
+
+5% incorrect Segment
+
+4% region-country mismatches
+
+6% stale enrichment (>180 days)
+
+2% hierarchy anomalies
+
+Hierarchy anomalies include:
+- subsidiary with no parent
+- self-parent candidate in LOCAL source data
+- cycle candidate in LOCAL source data
+- incorrect parent assignment
+
+IMPORTANT:
+Salesforce itself may prevent some impossible relationships.
+Hierarchy corruption can be represented and detected in PostgreSQL before bad
+records are pushed into Salesforce if Salesforce rejects them.
+
+
+CONTACT ISSUES
+
+4% duplicate Contacts
+
+8% missing Email
+
+4% malformed Email
+
+4% malformed Phone
+
+3% orphan/missing Account association
+
+5% stale enrichment
+
+Duplicate cases:
+
+- same exact email
+- same phone
+- same Account with similar FirstName/LastName
+- spelling variation in name
+
+
+OPPORTUNITY ISSUES
+
+5% missing Amount
+
+3% non-positive Amount
+
+5% Sales Segment inconsistent with Account
+
+4% Region inconsistent with Account
+
+7% open Opportunities with CloseDate in the past
+
+3% missing/invalid source attributes
+
+
+ENRICHMENT FEED
+===============
+
+Simulate a third-party enrichment provider.
+
+Create:
+
+data/generated/enrichment_feed.csv
+
+Columns:
+
+external_account_id
+website
+industry
+number_of_employees
+annual_revenue
+billing_country
+enriched_at
+vendor_name
+vendor_confidence
+
+Inject:
+
+- stale enrichment
+- incorrect domain mapping
+- missing fields
+- contradictory employee counts
+- incorrect country values
+- low-confidence matches
+
+Build a validation process before enrichment values are accepted.
+
+Output:
+
+data/generated/enrichment_approved.csv
+data/generated/enrichment_rejected.csv
+
+
+SALESFORCE WORKING DATASET
+==========================
+
+Select a representative subset from the 10,000 records.
+
+Target:
+
+Accounts: ~300
+Contacts: ~550
+Opportunities: ~300
+
+Ensure the Salesforce subset intentionally includes examples of every major
+quality defect.
+
+Keep under the Developer Edition storage limit.
+
+Mark all synthetic records with:
+
+Source_System__c
+
+and
+
+Ingestion_Batch_Id__c
+
+so the project can later identify/delete them safely.
+
+
+SALESFORCE IMPORT SEQUENCE
+==========================
+
+PHASE 1:
+Deploy custom fields.
+
+PHASE 2:
+Temporarily keep custom validation and duplicate prevention rules inactive.
+
+PHASE 3:
+Bulk upsert Accounts using:
+
+External_Source_Id__c
+
+Use Salesforce CLI Bulk API 2.0:
+
+sf data upsert bulk \
+  --sobject Account \
+  --file <account_csv> \
+  --external-id External_Source_Id__c \
+  --target-org gtmdq \
+  --wait 10
+
+PHASE 4:
+Query Account IDs:
+
+SELECT Id, External_Source_Id__c
+FROM Account
+WHERE Ingestion_Batch_Id__c = '<batch>'
+
+Create mapping:
+
+external_source_id -> Salesforce Id
+
+PHASE 5:
+Populate ParentId values.
+
+Bulk update Accounts with resolved Salesforce ParentId values.
+
+PHASE 6:
+Resolve Contact.AccountId using account mapping.
+
+Bulk upsert Contacts.
+
+PHASE 7:
+Resolve Opportunity.AccountId.
+
+Bulk upsert Opportunities.
+
+PHASE 8:
+Verify counts using SOQL.
+
+
+SOQL FILES
+==========
+
+Create:
+
+soql/accounts.soql
+
+SELECT
+Id,
+Name,
+Website,
+Phone,
+BillingCity,
+BillingState,
+BillingCountry,
+Industry,
+NumberOfEmployees,
+AnnualRevenue,
+Type,
+ParentId,
+External_Source_Id__c,
+Source_System__c,
+Ingestion_Batch_Id__c,
+Region__c,
+Segment__c,
+ICP_Tier__c,
+Canonical_Domain__c,
+Enrichment_Source__c,
+Last_Enriched_Date__c,
+DQ_Score__c,
+DQ_Status__c,
+DQ_Issue_Count__c,
+CreatedDate,
+LastModifiedDate
+FROM Account
+WHERE Source_System__c != NULL
+
+
+Create equivalent files for:
+
+Contact
+Opportunity
+
+
+SALESFORCE EXPORT
+=================
+
+Use:
+
+sf data export bulk
+
+for reproducible CRM snapshots.
+
+Example concept:
+
+sf data export bulk \
+  --query-file soql/accounts.soql \
+  --output-file data/snapshots/accounts.csv \
+  --result-format csv \
+  --target-org gtmdq \
+  --wait 10
+
+Do the same for Contacts and Opportunities.
+
+
+POSTGRESQL DATA MODEL
+=====================
+
+Create schemas:
+
+raw
+dq
+analytics
+
+
+RAW TABLES
+==========
+
+raw.salesforce_account
+raw.salesforce_contact
+raw.salesforce_opportunity
+raw.enrichment_feed
+
+Every raw Salesforce table should contain:
+
+snapshot_run_id UUID
+snapshot_at TIMESTAMPTZ
+
+plus Salesforce source fields.
+
+
+DQ RUN TABLE
+============
+
+dq.run
+
+Columns:
+
+run_id UUID PRIMARY KEY
+started_at TIMESTAMPTZ
+completed_at TIMESTAMPTZ
+source_snapshot_at TIMESTAMPTZ
+git_commit_sha TEXT
+status TEXT
+record_count INTEGER
+
+
+DQ RULE CATALOG
+===============
+
+dq.rule_catalog
+
+Columns:
+
+rule_id TEXT PRIMARY KEY
+entity_type TEXT
+dimension TEXT
+name TEXT
+description TEXT
+severity TEXT
+weight NUMERIC
+active BOOLEAN
+
+
+DQ RULE RESULT
+==============
+
+dq.rule_result
+
+Columns:
+
+run_id UUID
+rule_id TEXT
+entity_type TEXT
+entity_id TEXT
+external_source_id TEXT
+passed BOOLEAN
+observed_value TEXT
+expected_value TEXT
+details JSONB
+detected_at TIMESTAMPTZ
+
+
+DUPLICATE CANDIDATES
+====================
+
+dq.duplicate_candidate
+
+Columns:
+
+run_id UUID
+entity_type TEXT
+left_entity_id TEXT
+right_entity_id TEXT
+matching_method TEXT
+similarity_score NUMERIC
+confidence_band TEXT
+reasons JSONB
+review_status TEXT
+created_at TIMESTAMPTZ
+
+
+REMEDIATION QUEUE
+=================
+
+dq.remediation_queue
+
+Columns:
+
+run_id UUID
+issue_key TEXT
+entity_type TEXT
+entity_id TEXT
+external_source_id TEXT
+rule_id TEXT
+dimension TEXT
+severity TEXT
+pipeline_at_risk NUMERIC
+segment_weight NUMERIC
+detection_confidence NUMERIC
+priority_score NUMERIC
+recommended_action TEXT
+status TEXT
+created_at TIMESTAMPTZ
+
+
+DQ DIMENSIONS
+=============
+
+Implement:
+
+1. Completeness
+2. Validity
+3. Consistency
+4. Uniqueness
+5. Hierarchy Integrity
+6. Enrichment Quality
+
+
+ACCOUNT DQ RULES
+================
+
+A-COMP-001
+Website missing.
+
+A-COMP-002
+Industry missing.
+
+A-COMP-003
+BillingCountry missing.
+
+A-COMP-004
+Segment missing.
+
+A-VALID-001
+Invalid Website/domain syntax.
+
+A-CONS-001
+Region inconsistent with BillingCountry.
+
+A-CONS-002
+Segment inconsistent with calculated segmentation rules.
+
+A-HIER-001
+Account parent references itself.
+
+A-HIER-002
+Cycle detected in account hierarchy.
+
+A-HIER-003
+Subsidiary-like Account missing expected parent.
+
+A-HIER-004
+Hierarchy depth exceeds configured maximum.
+
+A-ENR-001
+Enrichment older than 180 days.
+
+A-ENR-002
+Low-confidence enrichment record.
+
+A-ENR-003
+Enrichment country conflicts with CRM country.
+
+A-UNIQ-001
+High-confidence duplicate Account.
+
+
+CONTACT DQ RULES
+================
+
+C-COMP-001
+Email missing.
+
+C-COMP-002
+Account association missing.
+
+C-VALID-001
+Malformed email.
+
+C-VALID-002
+Malformed phone.
+
+C-UNIQ-001
+Exact duplicate normalized email.
+
+C-UNIQ-002
+Exact normalized phone candidate.
+
+C-UNIQ-003
+Same Account + highly similar name.
+
+C-ENR-001
+Stale enrichment data.
+
+
+OPPORTUNITY DQ RULES
+====================
+
+O-COMP-001
+Account association missing.
+
+O-COMP-002
+Amount missing.
+
+O-COMP-003
+CloseDate missing.
+
+O-VALID-001
+Amount <= 0 for applicable Opportunities.
+
+O-CONS-001
+Open opportunity CloseDate is in the past.
+
+O-CONS-002
+Opportunity Sales_Segment__c differs from Account.Segment__c.
+
+O-CONS-003
+Opportunity Region__c differs from Account.Region__c.
+
+
+ADVANCED SQL REQUIREMENTS
+=========================
+
+The project must visibly demonstrate:
+
+- CTEs
+- recursive CTEs
+- window functions
+- CASE
+- FILTER clauses where useful
+- aggregate functions
+- conditional aggregation
+- ROW_NUMBER
+- LAG or LEAD
+- multi-table joins
+- ranking
+- normalization
+- percentile/rank analysis where appropriate
+
+
+RECURSIVE ACCOUNT HIERARCHY
+===========================
+
+Implement a recursive PostgreSQL CTE that traverses:
+
+Account -> Parent -> Root
+
+Output:
+
+account_id
+account_name
+parent_id
+root_account_id
+root_account_name
+hierarchy_depth
+hierarchy_path
+cycle_detected
+
+Ensure cycles terminate safely.
+
+
+DUPLICATE ACCOUNT DETECTION
+===========================
+
+Implement deterministic normalization:
+
+normalize_company_name()
+
+Remove or normalize terms such as:
+
+inc
+incorporated
+llc
+ltd
+limited
+corp
+corporation
+company
+co
+
+Normalize:
+
+- lowercase
+- punctuation
+- repeated spaces
+- www prefix
+- URL protocol
+- trailing slash
+- phone formatting
+
+
+HIGH CONFIDENCE ACCOUNT MATCHES
+===============================
+
+Examples:
+
+Exact normalized domain
+OR
+Exact normalized phone + high company-name similarity
+
+
+MEDIUM CONFIDENCE ACCOUNT MATCHES
+=================================
+
+Company-name similarity >= threshold
+AND
+same BillingCountry
+AND at least one supporting feature:
+
+- matching city
+- similar domain
+- matching phone
+
+
+CONTACT DUPLICATES
+==================
+
+High confidence:
+
+Exact normalized email
+
+OR
+
+Exact normalized phone + same Account
+
+Medium confidence:
+
+Same Account
+AND
+high similarity first/last name
+
+
+RAPIDFUZZ
+=========
+
+Use RapidFuzz for fuzzy matching.
+
+Do not compare every record against every record.
+
+Implement candidate blocking such as:
+
+- same country
+- same domain prefix
+- same first letter/token
+- same Account for Contacts
+
+Record:
+
+matching method
+similarity score
+supporting evidence
+
+
+GROUND TRUTH EVALUATION
+=======================
+
+Because corruption was intentionally generated, evaluate duplicate and DQ
+detection against ground_truth_issues.csv.
+
+Calculate where possible:
+
+precision
+recall
+true positives
+false positives
+false negatives
+
+For deterministic quality rules expected precision should approach 1.0.
+
+For fuzzy duplicates, document tradeoffs instead of optimizing to an artificial
+perfect score.
+
+
+DATA QUALITY SCORECARD
+======================
+
+Every quality dimension returns 0-100.
+
+Dimension score:
+
+100 * weighted_passed_checks / weighted_applicable_checks
+
+Ignore non-applicable checks rather than counting them as passing.
+
+
+OVERALL SCORE WEIGHTS
+=====================
+
+Use configurable weights:
+
+Completeness: 0.25
+Validity: 0.20
+Uniqueness: 0.20
+Consistency: 0.15
+Hierarchy: 0.10
+Enrichment: 0.10
+
+Store weights in:
+
+config/scoring.yml
+
+Do not hardcode inside SQL where avoidable.
+
+
+DQ STATUS
+=========
+
+Healthy:
+score >= 90
+and no Critical issue
+
+Review:
+score >= 70 and < 90
+OR High-severity issue
+
+Critical:
+score < 70
+OR any Critical issue
+
+
+PIPELINE AT RISK
+================
+
+Calculate dollar value of OPEN Opportunities exposed to quality issues.
+
+For Account-level issues:
+
+Pipeline at Risk =
+SUM of open Opportunity.Amount associated with the Account.
+
+For Opportunity issues:
+
+Pipeline at Risk =
+Opportunity.Amount if Opportunity remains open.
+
+Do NOT double-count the same Opportunity in the overall company-wide
+"Total Pipeline at Risk" KPI.
+
+Use DISTINCT affected Opportunity IDs when aggregating the enterprise KPI.
+
+
+ROOT CAUSE ANALYSIS
+===================
+
+This is mandatory.
+
+Build SQL analysis showing DQ issues by:
+
+- Source_System__c
+- Ingestion_Batch_Id__c
+- Region__c
+- Segment__c
+- Enrichment_Source__c
+- object type
+- DQ rule
+- quality dimension
+
+Calculate:
+
+issue_count
+affected_record_count
+issue_rate
+percentage_of_total_issues
+open_pipeline_at_risk
+
+Create:
+
+analytics.vw_root_cause_analysis
+
+The project must be able to answer questions like:
+
+"What source system contributes the most duplicate Accounts?"
+
+"Which enrichment source produces the highest stale-data rate?"
+
+"Which region has the lowest completeness score?"
+
+"How much open pipeline is attached to low-quality Accounts?"
+
+"Are Enterprise Accounts disproportionately affected?"
+
+
+REMEDIATION PRIORITY
+====================
+
+Map severity:
+
+Critical = 1.00
+High     = 0.80
+Medium   = 0.50
+Low      = 0.25
+
+Map segment importance:
+
+Enterprise = 1.00
+Mid-Market = 0.65
+SMB        = 0.35
+
+Normalize business impact using open pipeline.
+
+Suggested:
+
+impact_component =
+min(
+    1,
+    ln(1 + pipeline_at_risk) / ln(1 + 1000000)
+)
+
+Priority formula:
+
+priority_score =
+100 * (
+    0.40 * severity_component
+  + 0.35 * impact_component
+  + 0.15 * segment_component
+  + 0.10 * detection_confidence
+)
+
+Round to two decimals.
+
+This formula must be documented as a DEMO prioritization framework,
+not presented as an industry standard.
+
+
+RECOMMENDED ACTIONS
+===================
+
+Generate deterministic recommendations.
+
+Examples:
+
+Missing Industry:
+"Enrich Industry using approved enrichment source and validate before CRM update."
+
+Duplicate Account:
+"Review candidate pair and select canonical Account before merge."
+
+Stale enrichment:
+"Refresh third-party enrichment and verify domain/account match."
+
+Hierarchy cycle:
+"Review Parent Account assignments and restore acyclic corporate hierarchy."
+
+Past-due open opportunity:
+"Review Close Date with opportunity owner."
+
+Segment mismatch:
+"Recalculate segmentation using approved employee/revenue rules."
+
+
+SALESFORCE PUSHBACK
+===================
+
+After each DQ run, generate Salesforce CSV updates.
+
+Account:
+
+Id
+DQ_Score__c
+DQ_Status__c
+DQ_Issue_Count__c
+
+Contact:
+
+Id
+DQ_Score__c
+DQ_Status__c
+DQ_Issue_Count__c
+
+Opportunity:
+
+Id
+DQ_Score__c
+DQ_Status__c
+DQ_Issue_Count__c
+
+Bulk update them using Salesforce CLI.
+
+
+DQ ISSUE PUSHBACK
+=================
+
+Select top 100-200 unresolved issues by priority.
+
+Create one Data_Quality_Issue__c row per issue.
+
+External_Issue_Key__c must guarantee idempotency.
+
+Example key:
+
+<run_id>:<rule_id>:<entity_id>
+
+Populate corresponding lookup field if possible:
+
+Account issue -> Account__c
+Contact issue -> Contact__c
+Opportunity issue -> Opportunity__c
+
+
+SALESFORCE VALIDATION RULES
+===========================
+
+Do not activate these until dirty sample data has been loaded.
+
+The objective is to demonstrate:
+
+DETECTION of existing bad data
+
+PLUS
+
+PREVENTION of future bad data.
+
+
+Create at least these prevention rules:
+
+ACCOUNT
+
+Enterprise Account Requires Website
+
+Concept:
+
+Segment__c = Enterprise
+AND Website is blank
+
+
+CONTACT
+
+Contact Requires Account
+
+Concept:
+
+AccountId blank
+
+
+OPPORTUNITY
+
+Open Opportunity Cannot Have Past Close Date
+
+Concept:
+
+Opportunity is not closed
+AND CloseDate < TODAY()
+
+
+Do not blindly copy formulas.
+
+Codex must generate valid Salesforce formula metadata and verify deployment.
+
+
+SALESFORCE DUPLICATE MANAGEMENT
+===============================
+
+USER MUST DO THIS MANUALLY IN SALESFORCE UI TO LEARN IT.
+
+Codex should create a checklist but should not hide the learning step.
+
+Go to:
+
+Setup -> Duplicate Management -> Matching Rules
+
+Inspect Salesforce standard Account and Contact matching rules.
+
+Then create at least one custom Account matching rule.
+
+Experiment with combinations of:
+
+- Account Name fuzzy matching
+- Website/domain matching
+- Phone matching
+
+
+Create a Contact matching rule involving:
+
+- Email exact
+- and/or name-based matching as appropriate
+
+
+Then:
+
+Setup -> Duplicate Rules
+
+Create rules using the custom matching rules.
+
+For the portfolio environment, prefer:
+
+ALLOW + ALERT
+
+rather than blocking everything.
+
+Enable reporting where available.
+
+Do not rely on Salesforce Duplicate Jobs because edition availability varies and
+the free Developer Edition should not depend on that feature.
+
+Demonstrate duplicate behavior by manually creating one duplicate Account and one
+duplicate Contact after the rules are active.
+
+Capture screenshots.
+
+
+SALESFORCE POTENTIAL DUPLICATES
+===============================
+
+If available in the Developer Edition UI:
+
+Add or inspect the Potential Duplicates component for Account and Contact records.
+
+Document what Salesforce detects versus what the custom PostgreSQL/Python engine
+detects.
+
+
+SALESFORCE REPORTS
+==================
+
+USER SHOULD BUILD THESE THROUGH THE SALESFORCE REPORT BUILDER.
+
+Report 1:
+Account Data Quality
+
+Fields:
+Account Name
+Region
+Segment
+DQ Score
+DQ Status
+DQ Issue Count
+
+Group:
+Region
+Segment
+
+
+Report 2:
+High-Priority DQ Issues
+
+Object:
+Data_Quality_Issue__c
+
+Filter:
+Status != Resolved
+
+Columns:
+Issue
+Entity Type
+Dimension
+Severity
+Priority Score
+Pipeline At Risk
+Recommended Action
+
+Group by:
+Severity
+Dimension
+
+
+Report 3:
+Pipeline at Risk
+
+Use Opportunities.
+
+Include:
+
+Opportunity Name
+Account
+Stage
+Amount
+Account DQ Status
+Opportunity DQ Status
+
+Filter:
+IsClosed = false
+
+Analyze pipeline associated with poor-quality records.
+
+
+Report 4:
+Segmentation Coverage
+
+Accounts grouped by Segment and Region.
+
+Track missing Segment values.
+
+
+Report 5:
+Enrichment Coverage
+
+Accounts grouped by:
+
+Enrichment Source
+Last Enriched Date
+DQ Status
+
+
+SALESFORCE DASHBOARD
+====================
+
+Create a dashboard:
+
+"GTM Data Quality Command Center"
+
+Suggested components:
+
+KPI:
+Average Account DQ Score
+
+KPI:
+Open Critical Issues
+
+KPI:
+Open Pipeline at Risk
+
+Chart:
+DQ Issues by Dimension
+
+Chart:
+DQ Issues by Severity
+
+Chart:
+Average DQ Score by Region
+
+Chart:
+Pipeline at Risk by Segment
+
+Table:
+Top 10 Remediation Priorities
+
+
+POWER BI MODEL
+==============
+
+Connect Power BI Desktop to PostgreSQL.
+
+Create analytics views for Power BI.
+
+Required views:
+
+analytics.vw_executive_scorecard
+
+analytics.vw_dimension_scores
+
+analytics.vw_issue_trend
+
+analytics.vw_duplicate_analysis
+
+analytics.vw_hierarchy_health
+
+analytics.vw_enrichment_coverage
+
+analytics.vw_pipeline_at_risk
+
+analytics.vw_remediation_queue
+
+analytics.vw_root_cause_analysis
+
+
+POWER BI PAGES
+==============
+
+PAGE 1:
+Executive Overview
+
+Cards:
+
+Overall DQ Score
+Completeness
+Validity
+Uniqueness
+Consistency
+Hierarchy Integrity
+Enrichment Coverage
+
+Cards:
+
+Open Issues
+Critical Issues
+Pipeline At Risk
+
+
+PAGE 2:
+Issue Analysis
+
+Charts:
+
+Issues by Dimension
+Issues by Severity
+Issues by Object
+Issue Rate by Region
+Issue Rate by Segment
+
+
+PAGE 3:
+Duplicate Analysis
+
+Show:
+
+Account candidate count
+Contact candidate count
+Confidence distribution
+Duplicate rate by source system
+
+
+PAGE 4:
+Hierarchy Health
+
+Show:
+
+Accounts by hierarchy depth
+Missing parents
+Cycles
+Root Accounts
+Hierarchy integrity score
+
+
+PAGE 5:
+Pipeline Impact
+
+Show:
+
+Pipeline at risk
+Pipeline at risk by region
+Pipeline at risk by segment
+Top affected Accounts
+Top affected Opportunities
+
+
+PAGE 6:
+Root Cause Analysis
+
+Show:
+
+Issue rate by Source System
+Issue contribution by ingestion batch
+Issue rate by enrichment provider
+Top failing rules
+
+
+PAGE 7:
+Remediation Queue
+
+Table:
+
+Priority
+Entity
+Issue
+Severity
+Pipeline At Risk
+Recommended Action
+Status
+
+
+BASELINE AND AFTER-REMEDIATION RUN
+==================================
+
+The project must demonstrate improvement over time.
+
+RUN 1:
+
+baseline dirty dataset
+
+Capture:
+
+overall DQ score
+dimension scores
+issue counts
+pipeline at risk
+
+
+Then remediate several issues.
+
+Automatable safe fixes:
+
+- normalize domain
+- normalize phone
+- recalculate Region
+- recalculate Segment
+- refresh deterministic enrichment fields
+
+Do NOT automatically merge duplicate Accounts or Contacts.
+
+
+RUN 2:
+
+rerun DQ pipeline after remediation.
+
+Show:
+
+score improvement
+issue reduction
+pipeline risk improvement where applicable
+
+Power BI must show both runs as a trend.
+
+
+ROOT CAUSE CASE STUDY
+=====================
+
+Create:
+
+docs/root_cause_case_study.md
+
+Pick one detected issue.
+
+Example:
+
+"High rate of stale enrichment records from enrichment source Vendor A."
+
+Document:
+
+1. Symptom
+2. Quantified impact
+3. Affected population
+4. SQL investigation
+5. Source breakdown
+6. Root cause
+7. Remediation
+8. Prevention
+9. Business impact
+
+This document is important for interview preparation.
+
+
+OPTIONAL AI COMPONENT
+=====================
+
+Do this only AFTER the core project works.
+
+AI must not replace deterministic DQ rules.
+
+Use AI only for ambiguous duplicate candidates.
+
+Candidate range example:
+
+similarity score 0.65-0.90
+
+Input:
+
+Company A
+Company B
+domains
+phones
+countries
+cities
+contact overlap
+similarity features
+
+Expected structured response:
+
+{
+  "same_entity": true,
+  "confidence": 0.82,
+  "reason": [
+    "similar normalized company names",
+    "same headquarters city",
+    "related domains"
+  ]
+}
+
+CRITICAL:
+
+LLM result is advisory only.
+
+Never automatically merge based on LLM output.
+
+Set:
+
+review_status = "Needs Human Review"
+
+If no paid API is available, make this feature optional and support a local
+Ollama endpoint.
+
+The project must work completely without the LLM feature.
+
+
+PYTHON CLI
+==========
+
+Expose simple commands.
+
+Examples:
+
+python -m gtmdq.cli generate
+
+python -m gtmdq.cli db-init
+
+python -m gtmdq.cli sf-prepare
+
+python -m gtmdq.cli sf-pull
+
+python -m gtmdq.cli dq-run
+
+python -m gtmdq.cli score
+
+python -m gtmdq.cli remediate --dry-run
+
+python -m gtmdq.cli sf-push
+
+python -m gtmdq.cli all
+
+
+"all" must:
+
+1. pull Salesforce snapshot
+2. ingest snapshot into PostgreSQL
+3. create a new DQ run
+4. execute rule checks
+5. execute duplicate detection
+6. calculate scorecards
+7. calculate pipeline impact
+8. perform root-cause aggregations
+9. generate remediation queue
+10. generate Salesforce update CSVs
+11. print executive summary
+
+
+EXPECTED TERMINAL SUMMARY
+=========================
+
+Example format:
+
+====================================================
+GTM DATA QUALITY RUN
+====================================================
+
+Run ID: ...
+Accounts analyzed: ...
+Contacts analyzed: ...
+Opportunities analyzed: ...
+
+Overall DQ Score: 84.7
+
+Completeness:        91.2
+Validity:            94.1
+Uniqueness:          82.4
+Consistency:         86.8
+Hierarchy Integrity: 93.0
+Enrichment:          71.6
+
+Critical Issues: 12
+High Issues:     49
+Medium Issues:   103
+
+Potential Duplicate Accounts: 24
+Potential Duplicate Contacts: 31
+
+Open Pipeline At Risk: $...
+
+Top Root Cause:
+Enrichment Vendor / stale enrichment
+
+Top Remediation:
+...
+
+====================================================
+
+
+TESTING
+=======
+
+Create pytest tests.
+
+Minimum tests:
+
+Generator is deterministic.
+
+Generated record counts are correct.
+
+No accidental real PII is used.
+
+Company normalization works.
+
+Domain normalization works.
+
+Phone normalization works.
+
+Segmentation logic works.
+
+Region mapping works.
+
+Hierarchy traversal works.
+
+Hierarchy cycles are detected.
+
+Exact email duplicates are detected.
+
+Account fuzzy duplicates are detected.
+
+Score remains between 0 and 100.
+
+Critical issues affect DQ status.
+
+Pipeline-at-risk does not double count overall Opportunities.
+
+Priority score remains between 0 and 100.
+
+Salesforce update generation is idempotent.
+
+
+DOCUMENTATION
+=============
+
+README.md must contain:
+
+1. Business problem
+2. Architecture
+3. Tech stack
+4. Salesforce data model
+5. Data-quality dimensions
+6. Example anomalies
+7. How scoring works
+8. Root-cause methodology
+9. Remediation prioritization
+10. How to run locally
+11. How to configure Salesforce
+12. Dashboard screenshots
+13. Before/after results
+14. Limitations
+15. Future improvements
+
+
+DATA DICTIONARY
+===============
+
+docs/data_dictionary.md
+
+Columns:
+
+Object
+Field
+API Name
+Data Type
+Definition
+Required?
+System of Record
+Source
+Validation Rule
+Example
+Business Owner
+
+
+DQ RULE DOCUMENT
+================
+
+docs/dq_rules.md
+
+Columns:
+
+Rule ID
+Object
+Dimension
+Description
+Detection Logic
+Severity
+Recommended Action
+
+
+REMEDIATION RUNBOOK
+===================
+
+docs/remediation_runbook.md
+
+For every major issue type include:
+
+Issue
+Detection Method
+Severity
+Business Risk
+Investigation Steps
+Recommended Fix
+Can Auto-Fix?
+Human Approval Required?
+Prevention Strategy
+
+
+ARCHITECTURE DOCUMENT
+=====================
+
+docs/architecture.md
+
+Include Mermaid diagram.
+
+Diagram should show:
+
+Synthetic Sources
+Enrichment Feed
+Salesforce
+Bulk API / Salesforce CLI
+PostgreSQL
+DQ Rule Engine
+Duplicate Matching Engine
+Scorecard
+Remediation Queue
+Salesforce Pushback
+Power BI
+
+
+SALESFORCE SETUP DOCUMENT
+=========================
+
+docs/salesforce_setup.md
+
+Must document:
+
+Developer Edition creation
+CLI installation
+CLI authentication
+metadata deployment
+custom fields
+Account hierarchy
+matching rules
+duplicate rules
+validation rules
+Bulk API imports
+SOQL exports
+reports
+dashboard
+
+
+DEMO SCRIPT
+===========
+
+Create:
+
+docs/demo_script.md
+
+Prepare a five-minute interview demonstration.
+
+Flow:
+
+1. Show architecture.
+2. Show Account/Contact/Opportunity model in Salesforce.
+3. Show parent-child Account hierarchy.
+4. Show dirty CRM examples.
+5. Show Salesforce matching/duplicate rule.
+6. Run DQ pipeline.
+7. Show SQL scorecard.
+8. Show root-cause analysis.
+9. Show remediation queue.
+10. Show Pipeline at Risk.
+11. Show Salesforce DQ fields updated.
+12. Show Power BI dashboard.
+13. Show Run 1 vs Run 2 improvement.
+
+
+INTERVIEW QUESTIONS DOCUMENT
+============================
+
+Create:
+
+docs/interview_questions.md
+
+Prepare explanations for:
+
+What makes CRM data "high quality"?
+
+Difference between completeness and validity?
+
+Difference between validity and consistency?
+
+How would you detect duplicate Accounts?
+
+Why not merge every fuzzy duplicate automatically?
+
+How do Salesforce Matching Rules differ from Duplicate Rules?
+
+How do Accounts and Contacts relate?
+
+How do Account hierarchies work?
+
+How would you validate a parent-child Account hierarchy?
+
+What is segmentation?
+
+How would you validate an enrichment vendor?
+
+What is data profiling?
+
+What is root-cause analysis?
+
+How would you prioritize 10,000 data-quality issues?
+
+How do you quantify sales impact from bad CRM data?
+
+How can poor Account data impact pipeline reporting?
+
+What would you put into a DQ scorecard?
+
+How would you prevent the same issue from recurring?
+
+How would you communicate this to sales leadership?
+
+How would you use an LLM safely in data quality?
+
+
+SECURITY
+========
+
+.gitignore must exclude:
+
+.env
+*.log
+data/snapshots/*
+Salesforce credentials
+access tokens
+private keys
+
+Do not print Salesforce access tokens.
+
+Do not store credentials in README.
+
+
+SALESFORCE AUTHENTICATION
+=========================
+
+For THIS portfolio MVP:
+
+Use Salesforce CLI browser authentication.
+
+Do not build a custom OAuth client unless needed.
+
+Salesforce CLI handles local authentication.
+
+Python may invoke Salesforce CLI commands using subprocess.
+
+If direct REST API testing is desired, create only a small optional smoke test
+that obtains temporary credentials from Salesforce CLI and keeps them in memory.
+
+Do not write temporary access tokens to files or logs.
+
+
+FUTURE PRODUCTION AUTH
+======================
+
+Document but do not implement unless time remains:
+
+External Client App + OAuth.
+
+Do not create a legacy Connected App just for this portfolio project.
+
+
+PERFORMANCE
+===========
+
+Avoid O(n^2) duplicate comparisons across the complete dataset.
+
+Use blocking.
+
+Batch SQL operations.
+
+Use indexes on:
+
+external_source_id
+Salesforce Id
+AccountId
+ParentId
+normalized domain
+normalized email
+run_id
+rule_id
+
+
+POSTGRESQL INDEXES
+==================
+
+Create indexes supporting:
+
+raw.salesforce_account(id)
+raw.salesforce_account(external_source_id)
+raw.salesforce_account(parent_id)
+
+raw.salesforce_contact(account_id)
+raw.salesforce_contact(email)
+
+raw.salesforce_opportunity(account_id)
+
+dq.rule_result(run_id)
+dq.rule_result(rule_id)
+dq.remediation_queue(run_id, priority_score DESC)
+
+
+CODE QUALITY
+============
+
+Use type hints.
+
+Use docstrings where logic is non-obvious.
+
+Use parameterized SQL.
+
+Avoid SQL injection.
+
+Avoid enormous Python files.
+
+Keep business rules configurable.
+
+Use logging instead of print except CLI summaries.
+
+Raise useful errors.
+
+Make reruns safe.
+
+
+ACCEPTANCE CRITERIA
+===================
+
+Project is considered MVP complete only when all are true:
+
+[ ] Free Salesforce Developer Edition connected through sf CLI.
+
+[ ] Custom Account, Contact, and Opportunity fields deployed.
+
+[ ] Data_Quality_Issue__c deployed.
+
+[ ] 10,000+ synthetic GTM records generated locally.
+
+[ ] Ground-truth corruptions generated.
+
+[ ] Representative Salesforce dataset successfully loaded.
+
+[ ] Parent-child Account hierarchies visible in Salesforce.
+
+[ ] Salesforce CRM data exported into PostgreSQL.
+
+[ ] SQL profiling works.
+
+[ ] All six DQ dimensions implemented.
+
+[ ] Recursive hierarchy analysis implemented.
+
+[ ] Duplicate Account detection implemented.
+
+[ ] Duplicate Contact detection implemented.
+
+[ ] Enrichment validation implemented.
+
+[ ] DQ scorecard generated.
+
+[ ] Pipeline-at-risk calculated.
+
+[ ] Root-cause analysis generated.
+
+[ ] Remediation queue generated.
+
+[ ] DQ scores pushed back into Salesforce.
+
+[ ] Top issues pushed to Data_Quality_Issue__c.
+
+[ ] Salesforce matching/duplicate rules manually configured.
+
+[ ] Salesforce validation rules active AFTER dirty data loading.
+
+[ ] Salesforce reports created.
+
+[ ] Salesforce DQ dashboard created.
+
+[ ] Power BI dashboard created.
+
+[ ] At least one baseline and one post-remediation run stored.
+
+[ ] README complete.
+
+[ ] Data dictionary complete.
+
+[ ] DQ rules document complete.
+
+[ ] Remediation runbook complete.
+
+[ ] Root-cause case study complete.
+
+[ ] Tests passing.
+
+[ ] GitHub repository clean and presentable.
+
+
+SCOPE CONTROL
+=============
+
+DO NOT build:
+
+- React frontend
+- custom authentication
+- mobile application
+- complex FastAPI UI
+- Kubernetes
+- Kafka
+- unnecessary microservices
+- Salesforce Lightning components
+- complex CI/CD
+- paid infrastructure
+
+Those do not improve this portfolio project enough to justify the time.
+
+Focus on:
+
+CRM
+Salesforce
+SQL
+Data Quality
+Revenue Operations
+GTM
+Business Impact
+Analytics
+
+
+PAIR-PROGRAMMING INSTRUCTIONS FOR CODEX
+=======================================
+
+Act as my senior pair programmer, not an autonomous black-box developer.
+
+We have only 3-4 days.
+
+Before each milestone:
+
+1. Tell me what we are building.
+2. Explain the Salesforce/GTM/data-quality concept involved.
+3. List files you will create/change.
+4. Then implement it.
+5. Give me exact commands to run.
+6. Wait for or inspect execution results before continuing where appropriate.
+
+Do not fabricate successful Salesforce operations.
+
+Do not claim metadata deployed unless the CLI reports success.
+
+Do not claim data loaded unless record counts are verified.
+
+Do not invent Salesforce field API names.
+
+If an existing standard Salesforce field or picklist differs from expectations,
+query/describe the target org and adapt.
+
+Prioritize a working end-to-end MVP over unnecessary polish.
+
+The first milestone should be:
+
+A. scaffold repository
+B. create Docker PostgreSQL
+C. generate Salesforce DX metadata for fields/custom issue object
+D. deploy the schema
+E. generate synthetic data
+
+Do not implement Power BI or optional AI until the core DQ pipeline is functioning.
+
+
+END OF SPECIFICATION
+====================

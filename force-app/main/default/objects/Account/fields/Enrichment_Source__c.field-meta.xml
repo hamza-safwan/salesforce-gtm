@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Enrichment_Source__c</fullName>
+    <description>GTM DQ: Enrichment Source. See the project data dictionary.</description>
+    <label>Enrichment Source</label>
+    <length>80</length>
+    <required>false</required>
+    <type>Text</type>
+</CustomField>

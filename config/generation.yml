@@ -1,0 +1,43 @@
+seed: 42
+# A fixed reference date makes date-based defects reproducible as well as names.
+as_of: '2026-09-16'
+batch_prefix: GTMDQ-SYNTH
+accounts: 2500
+contacts: 5000
+opportunities: 2500
+hierarchy_fraction: 0.18
+regions:
+  US: 0.65
+  UK: 0.20
+  MX: 0.15
+segments:
+  SMB: 0.50
+  Mid-Market: 0.30
+  Enterprise: 0.20
+corruption:
+  account_duplicate: 0.05
+  account_missing_industry: 0.08
+  account_missing_website: 0.06
+  account_invalid_website: 0.04
+  account_segment: 0.05
+  account_region: 0.04
+  account_stale: 0.06
+  account_hierarchy: 0.02
+  contact_duplicate: 0.04
+  contact_missing_email: 0.08
+  contact_invalid_email: 0.04
+  contact_invalid_phone: 0.04
+  contact_orphan: 0.03
+  contact_stale: 0.05
+  opportunity_missing_amount: 0.05
+  opportunity_nonpositive_amount: 0.03
+  opportunity_segment: 0.05
+  opportunity_region: 0.04
+  opportunity_past_due: 0.07
+  opportunity_source: 0.03
+  enrichment_stale: 0.06
+  enrichment_domain: 0.04
+  enrichment_missing: 0.05
+  enrichment_employees: 0.04
+  enrichment_country: 0.04
+  enrichment_confidence: 0.06

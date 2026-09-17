@@ -1,0 +1,47 @@
+# Authoritative declarations for project-owned Salesforce custom fields.
+# Run scripts/build_metadata.py after changes and review the generated XML diff.
+picklists:
+  source: [Web Monitoring, Enrichment Vendor, Manual Entry, Partner Feed]
+  region: [US, UK, MX, Other]
+  segment: [SMB, Mid-Market, Enterprise]
+  dq_status: [Healthy, Review, Critical]
+common:
+  - {name: External_Source_Id__c, label: External Source ID, type: Text, length: 80, external: true}
+  - {name: Source_System__c, label: Source System, type: Picklist, values: source}
+  - {name: Ingestion_Batch_Id__c, label: Ingestion Batch ID, type: Text, length: 50}
+  - {name: DQ_Score__c, label: DQ Score, type: Number, precision: 5, scale: 2}
+  - {name: DQ_Status__c, label: DQ Status, type: Picklist, values: dq_status}
+  - {name: DQ_Issue_Count__c, label: DQ Issue Count, type: Number, precision: 5, scale: 0}
+objects:
+  Account:
+    - {name: Region__c, label: Region, type: Picklist, values: region}
+    - {name: Segment__c, label: Segment, type: Picklist, values: segment}
+    - {name: ICP_Tier__c, label: ICP Tier, type: Picklist, values: [Tier 1, Tier 2, Tier 3]}
+    - {name: Canonical_Domain__c, label: Canonical Domain, type: Text, length: 255}
+    - {name: Enrichment_Source__c, label: Enrichment Source, type: Text, length: 80}
+    - {name: Last_Enriched_Date__c, label: Last Enriched Date, type: Date}
+  Contact:
+    - {name: Seniority__c, label: Seniority, type: Picklist, values: [Individual Contributor, Manager, Director, VP, C-Level]}
+    - {name: Contact_Status__c, label: Contact Status, type: Picklist, values: [Active, Inactive, Unknown]}
+    - {name: Last_Enriched_Date__c, label: Last Enriched Date, type: Date}
+  Opportunity:
+    - {name: Region__c, label: Region, type: Picklist, values: region}
+    - {name: Sales_Segment__c, label: Sales Segment, type: Picklist, values: segment}
+  Data_Quality_Issue__c:
+    - {name: External_Issue_Key__c, label: External Issue Key, type: Text, length: 120, external: true}
+    - {name: Run_Id__c, label: Run ID, type: Text, length: 36}
+    - {name: Entity_Type__c, label: Entity Type, type: Picklist, values: [Account, Contact, Opportunity]}
+    - {name: Entity_Record_Id__c, label: Entity Record ID, type: Text, length: 18}
+    - {name: Account__c, label: Account, type: Lookup, reference: Account}
+    - {name: Contact__c, label: Contact, type: Lookup, reference: Contact}
+    - {name: Opportunity__c, label: Opportunity, type: Lookup, reference: Opportunity}
+    - {name: Rule_Id__c, label: Rule ID, type: Text, length: 40}
+    - {name: Dimension__c, label: Dimension, type: Picklist, values: [Completeness, Validity, Consistency, Uniqueness, Hierarchy, Enrichment]}
+    - {name: Severity__c, label: Severity, type: Picklist, values: [Critical, High, Medium, Low]}
+    - {name: Issue_Description__c, label: Issue Description, type: Text, length: 255}
+    - {name: Priority_Score__c, label: Priority Score, type: Number, precision: 5, scale: 2}
+    - {name: Pipeline_At_Risk__c, label: Pipeline At Risk, type: Currency, precision: 16, scale: 2}
+    - {name: Detection_Confidence__c, label: Detection Confidence, type: Number, precision: 5, scale: 2}
+    - {name: Recommended_Action__c, label: Recommended Action, type: Text, length: 255}
+    - {name: Status__c, label: Status, type: Picklist, values: [New, In Review, Resolved, Ignored]}
+    - {name: Detected_At__c, label: Detected At, type: DateTime}

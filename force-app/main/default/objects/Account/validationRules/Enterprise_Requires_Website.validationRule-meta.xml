@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Enterprise_Requires_Website</fullName>
+    <active>false</active>
+    <description>Activate only after baseline dirty data is loaded and evaluated.</description>
+    <errorConditionFormula>AND(ISPICKVAL(Segment__c, "Enterprise"), ISBLANK(Website))</errorConditionFormula>
+    <errorDisplayField>Website</errorDisplayField>
+    <errorMessage>Enterprise Accounts require a Website.</errorMessage>
+</ValidationRule>

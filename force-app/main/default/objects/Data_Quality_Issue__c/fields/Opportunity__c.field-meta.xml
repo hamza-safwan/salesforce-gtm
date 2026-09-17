@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Opportunity__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>GTM DQ: Opportunity. See the project data dictionary.</description>
+    <label>Opportunity</label>
+    <referenceTo>Opportunity</referenceTo>
+    <relationshipLabel>Data Quality Issues</relationshipLabel>
+    <relationshipName>GTM_Data_Quality_Issues</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

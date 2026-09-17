@@ -1,0 +1,11 @@
+enterprise:
+  min_employees: 1000
+  min_revenue: 100000000
+mid_market:
+  min_employees: 200
+  min_revenue: 20000000
+country_regions:
+  United States: US
+  United Kingdom: UK
+  Mexico: MX
+max_hierarchy_depth: 3

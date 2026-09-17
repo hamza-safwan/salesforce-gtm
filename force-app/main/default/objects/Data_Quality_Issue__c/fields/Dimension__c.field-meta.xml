@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Dimension__c</fullName>
+    <description>GTM DQ: Dimension. See the project data dictionary.</description>
+    <label>Dimension</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Completeness</fullName>
+                <default>false</default>
+                <label>Completeness</label>
+            </value>
+            <value>
+                <fullName>Validity</fullName>
+                <default>false</default>
+                <label>Validity</label>
+            </value>
+            <value>
+                <fullName>Consistency</fullName>
+                <default>false</default>
+                <label>Consistency</label>
+            </value>
+            <value>
+                <fullName>Uniqueness</fullName>
+                <default>false</default>
+                <label>Uniqueness</label>
+            </value>
+            <value>
+                <fullName>Hierarchy</fullName>
+                <default>false</default>
+                <label>Hierarchy</label>
+            </value>
+            <value>
+                <fullName>Enrichment</fullName>
+                <default>false</default>
+                <label>Enrichment</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

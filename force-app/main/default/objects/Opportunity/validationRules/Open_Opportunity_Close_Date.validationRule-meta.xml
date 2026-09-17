@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Open_Opportunity_Close_Date</fullName>
+    <active>false</active>
+    <description>Activate only after baseline dirty data is loaded and evaluated.</description>
+    <errorConditionFormula>AND(NOT(IsClosed), CloseDate &lt; TODAY())</errorConditionFormula>
+    <errorDisplayField>CloseDate</errorDisplayField>
+    <errorMessage>Open Opportunities require a current or future Close Date.</errorMessage>
+</ValidationRule>
