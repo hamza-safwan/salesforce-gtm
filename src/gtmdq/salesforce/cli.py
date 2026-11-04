@@ -10,19 +10,6 @@ import yaml
 
 from gtmdq.config import PROJECT_ROOT
 
-
-def executable() -> list[str]:
-    local = PROJECT_ROOT / "node_modules/@salesforce/cli/bin/run.js"
-    node = shutil.which("node")
-    if local.is_file() and node:
-        # Invoking node directly avoids Windows .cmd quoting and shell expansion.
-        return [node, str(local)]
-    sf = shutil.which("sf")
-    if sf:
-        return [sf]
-    raise ValueError("Salesforce CLI is missing. Run npm.cmd ci in the project root.")
-
-
 def run_json(arguments: list[str], target_org: str) -> dict[str, Any]:
     command = executable() + arguments + ["--target-org", target_org, "--json"]
     result = subprocess.run(
